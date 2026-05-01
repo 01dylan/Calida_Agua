@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -52,4 +52,17 @@ urlpatterns = [
 
     # Auth
     path('api/me/',                                views.me,                 name='me'),
+
+    # Roles
+    path('api/roles',                              views.get_roles,           name='get_roles'),
+    path('api/roles/create',                       views.create_rol,          name='create_rol'),
+    path('api/roles/<int:pk>/update',              views.update_rol,          name='update_rol'),
+    path('api/roles/<int:pk>/delete',              views.delete_rol,          name='delete_rol'),
+
+    # Usuarios Roles
+    path('api/usuarios-roles',                     views.get_usuarios_roles,  name='get_usuarios_roles'),
+    path('api/usuarios-roles/create',              views.create_usuario_rol,  name='create_usuario_rol'),
+    path('api/usuarios-roles/<int:pk>/delete',     views.delete_usuario_rol,  name='delete_usuario_rol'),
+
+   
 ]

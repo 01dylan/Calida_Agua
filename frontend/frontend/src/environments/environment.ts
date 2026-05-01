@@ -2,5 +2,5 @@
 
 export const environment = {
   production: false,
-  API_URL: 'https://calidaagua-production.up.railway.app/api'
+  API_URL: 'http://127.0.0.1:8000/api'
 };

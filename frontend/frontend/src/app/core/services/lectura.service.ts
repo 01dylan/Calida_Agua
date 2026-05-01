@@ -1,4 +1,4 @@
-// src/app/core/services/device.service.ts
+// src/app/core/services/lectura.service.ts
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
@@ -6,13 +6,13 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
-import { Device } from '../models/device.model';
+import { Lectura, LecturaPayload } from '../models/device.model';
 import { StorageService } from './storage.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DeviceService {
+export class LecturaService {
 
   private base = environment.API_URL;
 
@@ -23,43 +23,44 @@ export class DeviceService {
 
   private getHeaders(): HttpHeaders {
     const token = this.storageService.getToken();
-    return new HttpHeaders({ 'Content-Type': 'application/json',
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     });
   }
 
-  listar(): Observable<Device[]> {
-    return this.http.get<Device[]>(
-      `${this.base}/dispositivos`,
+  listar(dispositivoId?: number, fuente?: string, limit = 50): Observable<Lectura[]> {
+    let url = `${this.base}/lecturas?limit=${limit}`;
+    if (dispositivoId) url += `&dispositivo_id=${dispositivoId}`;
+    if (fuente) url += `&fuente=${fuente}`;
+    return this.http.get<Lectura[]>(url, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
+  }
+
+  ultima(dispositivoId: number): Observable<Lectura> {
+    return this.http.get<Lectura>(
+      `${this.base}/lecturas/latest?dispositivo_id=${dispositivoId}`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
-  crear(device: Partial<Device>): Observable<any> {
+  crear(payload: LecturaPayload): Observable<any> {
     return this.http.post<any>(
-      `${this.base}/dispositivos/create`,
-      device,
-      { headers: this.getHeaders() }
-    ).pipe(catchError(this.handleError));
-  }
-
-  actualizar(id: number, device: Partial<Device>): Observable<any> {
-    return this.http.put<any>(
-      `${this.base}/dispositivos/${id}/update`,
-      device,
+      `${this.base}/lecturas/create`,
+      payload,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
   eliminar(id: number): Observable<any> {
     return this.http.delete<any>(
-      `${this.base}/dispositivos/${id}/delete`,
+      `${this.base}/lecturas/${id}/delete`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('Error en DeviceService:', error);
+    console.error('Error en LecturaService:', error);
     return throwError(() => error);
   }
 }

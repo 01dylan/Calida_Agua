@@ -2,26 +2,38 @@
 
 export interface Device {
   id: number;
-  zone_name?: string;
-  farm_name?: string;
+  comunidad_id: number;
+  actuador_id?: number | null;
+  nombre: string;
+  mac_address?: string;
+  ip_address?: string;
+  ubicacion?: string;
+  firmware?: string;
+  activo: boolean;
   created_at?: string;
   updated_at?: string;
-
-  device_id: string;
-  name: string;
-  device_type: string;
-  firmware_version?: string;
-  ip_address?: string | null;
-  mac_address?: string;
-  status: string;
-  last_seen?: string | null;
-  active: boolean;
-  zone: number;
 }
 
-export interface PaginatedDeviceResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Device[];
+export interface Lectura {
+  id: number;
+  dispositivo_id: number;
+  temperatura: number;
+  turbidez: number;
+  conductividad: number;
+  ph: number;
+  estado: string;
+  fuente: 'ESP32' | 'MANUAL';
+  registrado_por?: string;
+  fecha: string;
+}
+
+export interface LecturaPayload {
+  dispositivo_id: number;
+  temperatura: number;
+  turbidez: number;
+  conductividad: number;
+  ph: number;
+  fecha: string;
+  fuente: 'ESP32' | 'MANUAL';
+  registrado_por?: string;
 }

@@ -23,10 +23,10 @@ export const routes: Routes = [
                 canActivate: [authGuard]
             },
             {
-                path: 'roles',
+                path: 'comunidades',
                 loadComponent: () =>
-                    import('./features/roles/roles')
-                        .then(m => m.RolesComponent),
+                    import('./features/comunidades/comunidades')
+                        .then(m => m.Comunidades),
                 canActivate: [authGuard]
             },
             {
@@ -34,6 +34,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./features/dispositivos/dispositivos')
                         .then(m => m.Dispositivos),
+                canActivate: [authGuard]
+            },
+            {
+                path: 'roles',
+                loadComponent: () =>
+                    import('./features/roles/roles')
+                        .then(m => m.RolesComponent),
                 canActivate: [authGuard]
             },
             {

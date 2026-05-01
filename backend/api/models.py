@@ -167,14 +167,21 @@ class Sensor(models.Model):
 
 
 class LecturaSensor(models.Model):
-    dispositivo   = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, related_name="lecturas")
-    sensor        = models.ForeignKey(Sensor,      on_delete=models.CASCADE, related_name="lecturas")
-    temperatura   = models.FloatField()
-    turbidez      = models.IntegerField()
-    conductividad = models.IntegerField()
-    ph            = models.FloatField()
-    estado        = models.CharField(max_length=50)
-    fecha         = models.DateTimeField(auto_now_add=True)
+    FUENTES = [
+        ("ESP32",  "Automático ESP32"),
+        ("MANUAL", "Ingreso manual"),
+    ]
+
+    dispositivo    = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, related_name="lecturas")
+    sensor         = models.ForeignKey(Sensor, on_delete=models.CASCADE, related_name="lecturas")
+    temperatura    = models.FloatField()
+    turbidez       = models.IntegerField()
+    conductividad  = models.IntegerField()
+    ph             = models.FloatField()
+    estado         = models.CharField(max_length=50)
+    fuente         = models.CharField(max_length=10, choices=FUENTES, default="ESP32")
+    registrado_por = models.CharField(max_length=100, blank=True)
+    fecha          = models.DateTimeField()   
 
     class Meta:
         verbose_name        = "Lectura de sensor"

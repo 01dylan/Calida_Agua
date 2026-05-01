@@ -194,11 +194,18 @@ def delete_sensor(request, pk):
 # =====================================================
 def get_lecturas(request):
     dispositivo_id = request.GET.get("dispositivo_id")
-    limit          = int(request.GET.get("limit", 20))
+    fuente         = request.GET.get("fuente")
+    limit          = int(request.GET.get("limit", 50))
     qs             = LecturaSensor.objects.all()
     if dispositivo_id:
         qs = qs.filter(dispositivo_id=dispositivo_id)
-    return JsonResponse(list(qs.values()[:limit]), safe=False)
+    if fuente:
+        qs = qs.filter(fuente=fuente)
+    return JsonResponse(list(qs.values(
+        "id", "dispositivo_id", "temperatura", "turbidez",
+        "conductividad", "ph", "estado", "fuente",
+        "registrado_por", "fecha"
+    )[:limit]), safe=False)
 
 def get_latest_lectura(request):
     dispositivo_id = request.GET.get("dispositivo_id")
@@ -227,7 +234,16 @@ def create_lectura(request):
     try:
         data        = json.loads(request.body)
         dispositivo = Dispositivo.objects.get(id=data["dispositivo_id"])
-        sensor      = Sensor.objects.filter(dispositivo=dispositivo).first()
+
+        sensor = Sensor.objects.filter(dispositivo=dispositivo).first()
+        if not sensor:
+            sensor = Sensor.objects.create(
+                dispositivo=dispositivo,
+                nombre='Sensor principal',
+                tipo='PH',
+                unidad='pH',
+                activo=True
+            )
 
         try:
             th = dispositivo.umbral
@@ -257,33 +273,67 @@ def create_lectura(request):
         )
 
         if es_peligro:
-            nivel, estado, detalle = "ROJO",     "ADVERTENCIA", "AGUA PELIGROSA"
+            nivel, estado, detalle = "ROJO", "ADVERTENCIA", "AGUA PELIGROSA"
         elif es_precaucion:
-            nivel, estado, detalle = "AMARILLO",  "PRECAUCION",  "Tenga cuidado"
+            nivel, estado, detalle = "AMARILLO", "PRECAUCION", "Tenga cuidado"
         else:
-            nivel, estado, detalle = "VERDE",    "AGUA APTA",   "Agua es segura"
+            nivel, estado, detalle = "VERDE", "AGUA APTA", "Agua es segura"
+
+        from django.utils import timezone
+        from django.utils.dateparse import parse_datetime
+
+        fecha_raw = data.get("fecha")
+        if fecha_raw:
+            fecha = parse_datetime(fecha_raw)
+            if not fecha:
+                fecha = timezone.now()
+        else:
+            fecha = timezone.now()
+
+        fuente         = data.get("fuente", "ESP32")
+        registrado_por = data.get("registrado_por", "")
 
         lectura = LecturaSensor.objects.create(
-            dispositivo=dispositivo, sensor=sensor,
-            temperatura=temp, turbidez=turb,
-            conductividad=cond, ph=ph, estado=estado,
+            dispositivo    = dispositivo,
+            sensor         = sensor,
+            temperatura    = temp,
+            turbidez       = turb,
+            conductividad  = cond,
+            ph             = ph,
+            estado         = estado,
+            fecha          = fecha,
+            fuente         = fuente,
+            registrado_por = registrado_por,
         )
+
         Alerta.objects.create(
-            comunidad=dispositivo.comunidad, dispositivo=dispositivo,
-            lectura=lectura, nivel_alerta=nivel,
-            mensaje_estado=estado, mensaje_detalle=detalle,
+            comunidad       = dispositivo.comunidad,
+            dispositivo     = dispositivo,
+            lectura         = lectura,
+            nivel_alerta    = nivel,
+            mensaje_estado  = estado,
+            mensaje_detalle = detalle,
         )
         EstadoCalidadAgua.objects.create(
-            dispositivo=dispositivo, lectura=lectura,
-            nivel=nivel, mensaje_estado=estado, mensaje_detalle=detalle,
+            dispositivo     = dispositivo,
+            lectura         = lectura,
+            nivel           = nivel,
+            mensaje_estado  = estado,
+            mensaje_detalle = detalle,
         )
-        return JsonResponse({"ok": True, "id": lectura.id, "estado": estado, "nivel": nivel})
+
+        return JsonResponse({
+            "ok":     True,
+            "id":     lectura.id,
+            "estado": estado,
+            "nivel":  nivel,
+            "fuente": fuente,
+        })
 
     except Dispositivo.DoesNotExist:
         return JsonResponse({"error": "Dispositivo no encontrado"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-
 @csrf_exempt
 def delete_lectura(request, pk):
     if request.method != "DELETE":
@@ -293,7 +343,6 @@ def delete_lectura(request, pk):
         return JsonResponse({"ok": True})
     except LecturaSensor.DoesNotExist:
         return JsonResponse({"error": "No encontrado"}, status=404)
-
 
 # =====================================================
 #   ALERTAS
@@ -441,3 +490,88 @@ def create_log(request):
         return JsonResponse({"ok": True, "id": obj.id})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+# =====================================================
+#   ROLES
+# =====================================================
+def get_roles(request):
+    return JsonResponse(list(Rol.objects.values(
+        'id', 'nombre', 'descripcion', 'activo'
+    )), safe=False)
+
+@csrf_exempt
+def create_rol(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = Rol.objects.create(
+            nombre      = data["nombre"],
+            descripcion = data.get("descripcion", ""),
+            activo      = data.get("activo", True),
+        )
+        return JsonResponse({"ok": True, "id": obj.id, "nombre": obj.nombre,
+                             "descripcion": obj.descripcion, "activo": obj.activo})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def update_rol(request, pk):
+    if request.method != "PUT":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        obj  = Rol.objects.get(id=pk)
+        data = json.loads(request.body)
+        obj.nombre      = data.get("nombre",      obj.nombre)
+        obj.descripcion = data.get("descripcion", obj.descripcion)
+        obj.activo      = data.get("activo",      obj.activo)
+        obj.save()
+        return JsonResponse({"ok": True, "id": obj.id, "nombre": obj.nombre,
+                             "descripcion": obj.descripcion, "activo": obj.activo})
+    except Rol.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_rol(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        Rol.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except Rol.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+
+
+
+#   USUARIOS ROLES
+
+def get_usuarios_roles(request):
+    return JsonResponse(list(UsuarioRol.objects.values(
+        'id', 'usuario_id', 'rol_id'
+    )), safe=False)
+
+@csrf_exempt
+def create_usuario_rol(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = UsuarioRol.objects.create(
+            usuario_id = data["usuario"],
+            rol_id     = data["rol"],
+        )
+        return JsonResponse({"ok": True, "id": obj.id,
+                             "usuario": obj.usuario_id, "rol": obj.rol_id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_usuario_rol(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        UsuarioRol.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except UsuarioRol.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)

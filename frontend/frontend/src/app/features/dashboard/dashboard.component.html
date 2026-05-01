@@ -1,48 +1,146 @@
 <div class="dashboard">
 
+  <!-- BIENVENIDA -->
   <section class="welcome-card">
-    <div>
-      <h2>Bienvenido, {{ usuario?.nombre }}</h2>
-      <p>Este es el panel principal del sistema.</p>
+    <div class="welcome-left">
+      <p class="welcome-date">{{ fechaHoy | date:'EEEE, d MMMM yyyy' : '' : 'es' }}</p>
+      <h2>Bienvenido, {{ usuario?.nombre || usuario?.username || 'Administrador' }}</h2>
+      <p class="welcome-sub">Panel de monitoreo de calidad del agua</p>
     </div>
-
-    <div class="badge">
-      {{ roles[0]?.nombre || 'Usuario' }}
+    <div class="estado-general" [ngClass]="{
+      'estado-verde': estadoGeneral === 'VERDE',
+      'estado-amarillo': estadoGeneral === 'AMARILLO',
+      'estado-rojo': estadoGeneral === 'ROJO'
+    }">
+      <i class="fa-solid fa-droplet"></i>
+      <div>
+        <strong>{{ estadoGeneral === 'VERDE' ? 'Agua apta' : estadoGeneral === 'AMARILLO' ? 'Precaución' : 'Alerta' }}</strong>
+        <span>Estado general</span>
+      </div>
     </div>
   </section>
 
-  <section class="stats-grid">
-
-    <article class="stat-card">
-      <div class="stat-icon">
-        <i class="fa-solid fa-user-shield"></i>
+  <!-- MÉTRICAS -->
+  <section class="metrics-grid">
+    <article class="metric-card">
+      <div class="metric-icon green">
+        <i class="fa-solid fa-microchip"></i>
       </div>
       <div>
-        <h3>{{ roles.length }}</h3>
-        <p>Roles asignados</p>
+        <h3>{{ dispositivosActivos }} / {{ totalDispositivos }}</h3>
+        <p>Dispositivos activos</p>
       </div>
     </article>
 
-    <article class="stat-card">
-      <div class="stat-icon">
-        <i class="fa-solid fa-list-check"></i>
+    <article class="metric-card">
+      <div class="metric-icon blue">
+        <i class="fa-solid fa-droplet"></i>
       </div>
       <div>
-        <h3>{{ recursos.length }}</h3>
-        <p>Recursos permitidos</p>
+        <h3>{{ totalLecturas }}</h3>
+        <p>Lecturas recientes</p>
       </div>
     </article>
 
-    <article class="stat-card">
-      <div class="stat-icon">
-        <i class="fa-solid fa-lock"></i>
+    <article class="metric-card">
+      <div class="metric-icon amber">
+        <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
       <div>
-        <h3>Activo</h3>
-        <p>Estado de sesión</p>
+        <h3>{{ alertasHoy }}</h3>
+        <p>Alertas activas</p>
       </div>
     </article>
 
+    <article class="metric-card">
+      <div class="metric-icon purple">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div>
+        <h3>{{ ultimaLectura ? tiempoTranscurrido(ultimaLectura.fecha) : 'Sin datos' }}</h3>
+        <p>Última lectura</p>
+      </div>
+    </article>
   </section>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="main-grid">
+
+    <!-- ÚLTIMAS LECTURAS -->
+    <section class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-list"></i> Últimas lecturas</h3>
+        <a routerLink="/dispositivos" class="ver-mas">Ver todas →</a>
+      </div>
+
+      <div class="loading-state" *ngIf="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Cargando...
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && lecturas.length === 0">
+        <i class="fa-solid fa-droplet"></i>
+        <p>No hay lecturas registradas aún</p>
+        <a routerLink="/dispositivos" class="btn-link">Registrar lectura</a>
+      </div>
+
+      <div class="table-wrap" *ngIf="!loading && lecturas.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>pH</th>
+              <th>Temp.</th>
+              <th>Turbidez</th>
+              <th>Estado</th>
+              <th>Fuente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of lecturas">
+              <td>{{ l.fecha | date:'dd/MM HH:mm' }}</td>
+              <td>{{ l.ph }}</td>
+              <td>{{ l.temperatura }}°C</td>
+              <td>{{ l.turbidez }} NTU</td>
+              <td>
+                <span class="badge" [ngClass]="estadoClass(l.estado)">{{ l.estado }}</span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-manual]="l.fuente === 'MANUAL'" [class.badge-ok]="l.fuente === 'ESP32'">
+                  {{ l.fuente }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DISPOSITIVOS -->
+    <section class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-microchip"></i> Dispositivos</h3>
+        <a routerLink="/dispositivos" class="ver-mas">Gestionar →</a>
+      </div>
+
+      <div class="empty-state" *ngIf="dispositivos.length === 0">
+        <i class="fa-solid fa-microchip"></i>
+        <p>No hay dispositivos registrados</p>
+      </div>
+
+      <div class="device-list" *ngIf="dispositivos.length > 0">
+        <div class="device-item" *ngFor="let d of dispositivos">
+          <div class="device-dot" [class.activo]="d.activo"></div>
+          <div class="device-info">
+            <strong>{{ d.nombre }}</strong>
+            <span>{{ d.ubicacion || 'Sin ubicación' }} · {{ d.mac_address || 'Sin MAC' }}</span>
+          </div>
+          <span class="badge" [class.badge-ok]="d.activo" [class.badge-err]="!d.activo">
+            {{ d.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+  </div>
 
 </div>

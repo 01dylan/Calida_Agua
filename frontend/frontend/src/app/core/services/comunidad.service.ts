@@ -1,18 +1,24 @@
-// src/app/core/services/device.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-
 import { environment } from '../../../environments/environment';
-import { Device } from '../models/device.model';
 import { StorageService } from './storage.service';
+
+export interface Comunidad {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  ubicacion?: string;
+  latitud?: number | null;
+  longitud?: number | null;
+  activo?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
-export class DeviceService {
+export class ComunidadService {
 
   private base = environment.API_URL;
 
@@ -23,43 +29,44 @@ export class DeviceService {
 
   private getHeaders(): HttpHeaders {
     const token = this.storageService.getToken();
-    return new HttpHeaders({ 'Content-Type': 'application/json',
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     });
   }
 
-  listar(): Observable<Device[]> {
-    return this.http.get<Device[]>(
-      `${this.base}/dispositivos`,
+  listar(): Observable<Comunidad[]> {
+    return this.http.get<Comunidad[]>(
+      `${this.base}/comunidades`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
-  crear(device: Partial<Device>): Observable<any> {
+  crear(data: Partial<Comunidad>): Observable<any> {
     return this.http.post<any>(
-      `${this.base}/dispositivos/create`,
-      device,
+      `${this.base}/comunidades/create`,
+      data,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
-  actualizar(id: number, device: Partial<Device>): Observable<any> {
+  actualizar(id: number, data: Partial<Comunidad>): Observable<any> {
     return this.http.put<any>(
-      `${this.base}/dispositivos/${id}/update`,
-      device,
+      `${this.base}/comunidades/${id}/update`,
+      data,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
   eliminar(id: number): Observable<any> {
     return this.http.delete<any>(
-      `${this.base}/dispositivos/${id}/delete`,
+      `${this.base}/comunidades/${id}/delete`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('Error en DeviceService:', error);
+    console.error('Error en ComunidadService:', error);
     return throwError(() => error);
   }
 }
