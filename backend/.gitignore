@@ -1,0 +1,19 @@
+# Entornos virtuales
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Base de datos
+db.sqlite3
+
+# Variables de entorno
+.env
+
+# VSCode
+.vscode/
+
+# Node (por si usas frontend)
+node_modules/
