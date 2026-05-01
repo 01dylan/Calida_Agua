@@ -21,7 +21,7 @@ export class AuthService {
     ) { }
 
     login(username: string, password: string): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/login/`, {
+        return this.http.post<AuthResponse>(`${this.apiUrl}/token/`, {
             username,
             password
         }).pipe(
@@ -32,9 +32,9 @@ export class AuthService {
                     this.storageService.setRefreshToken(response.refresh);
                 }
 
-                this.storageService.setUsuario(response.usuario);
-                this.storageService.setRoles(response.roles);
-                this.storageService.setRecursos(response.recursos);
+                //this.storageService.setUsuario(response.usuario);
+                //this.storageService.setRoles(response.roles);
+                //this.storageService.setRecursos(response.recursos);
             })
         );
     }
