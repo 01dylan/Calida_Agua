@@ -1,0 +1,82 @@
+<section class="page">
+
+  <div class="page-header">
+    <div>
+      <h2>Gestión de usuarios</h2>
+      <p>Administre los usuarios registrados en el sistema.</p>
+    </div>
+
+    <button class="primary-button">
+      <i class="fa-solid fa-plus"></i>
+      Nuevo usuario
+    </button>
+  </div>
+
+  <div class="card">
+
+    <div class="table-header">
+      <h3>Listado de usuarios</h3>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          type="text"
+          placeholder="Buscar usuario..."
+          (input)="buscar($event)">
+      </div>
+    </div>
+
+    <div class="loading-box" *ngIf="loading">
+      Cargando usuarios...
+    </div>
+
+    <div class="error-box" *ngIf="errorMessage && !loading">
+      {{ errorMessage }}
+    </div>
+
+    <div class="empty-box" *ngIf="!loading && usuariosFiltrados.length === 0 && !errorMessage">
+      No hay usuarios registrados.
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading && usuariosFiltrados.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Usuario</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let usuario of usuariosFiltrados">
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.apellido }}</td>
+            <td>{{ usuario.username }}</td>
+            <td>
+              <span
+                class="status"
+                [class.active]="usuario.estado !== 'Inactivo'"
+                [class.inactive]="usuario.estado === 'Inactivo'">
+                {{ usuario.estado || 'Activo' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="icon-button edit" type="button" (click)="editar(usuario)">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+
+              <button class="icon-button delete" type="button" (click)="eliminar(usuario)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</section>

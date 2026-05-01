@@ -25,7 +25,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECRET_KEY = 'django-insecure-a6q+r6vjv!wpzd&7v+wyksez$6!l8f5jqr2a!x08fcjohj(^j5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     ".up.railway.app",

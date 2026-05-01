@@ -1,0 +1,54 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+
+  <div class="sidebar-header">
+    <div class="logo">
+      <i class="fa-solid fa-layer-group"></i>
+    </div>
+
+    <div class="brand" *ngIf="!collapsed">
+      <h2>Mi Sistema</h2>
+      <span>Panel de control</span>
+    </div>
+  </div>
+
+  <nav class="menu">
+
+    <ng-container *ngFor="let item of menu">
+
+      <div class="menu-item" *ngIf="!item.items || item.items.length === 0">
+        <a [routerLink]="item.path" routerLinkActive="active">
+          <i [class]="item.icono || 'fa-solid fa-circle'"></i>
+          <span *ngIf="!collapsed">{{ item.nombre }}</span>
+        </a>
+      </div>
+
+      <div class="menu-group" *ngIf="item.items && item.items.length > 0">
+
+        <button type="button" (click)="toggleItem(item.id)">
+          <i [class]="item.icono || 'fa-solid fa-folder'"></i>
+          <span *ngIf="!collapsed">{{ item.nombre }}</span>
+
+          <i
+            *ngIf="!collapsed"
+            class="fa-solid fa-chevron-down arrow"
+            [class.rotate]="isOpen(item.id)">
+          </i>
+        </button>
+
+        <div class="submenu" *ngIf="isOpen(item.id) && !collapsed">
+          <a
+            *ngFor="let child of item.items"
+            [routerLink]="child.path"
+            routerLinkActive="active">
+            <i [class]="child.icono || 'fa-solid fa-angle-right'"></i>
+            <span>{{ child.nombre }}</span>
+          </a>
+        </div>
+
+      </div>
+
+    </ng-container>
+
+  </nav>
+
+</aside>

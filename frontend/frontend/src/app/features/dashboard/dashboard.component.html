@@ -1,0 +1,48 @@
+<div class="dashboard">
+
+  <section class="welcome-card">
+    <div>
+      <h2>Bienvenido, {{ usuario?.nombre }}</h2>
+      <p>Este es el panel principal del sistema.</p>
+    </div>
+
+    <div class="badge">
+      {{ roles[0]?.nombre || 'Usuario' }}
+    </div>
+  </section>
+
+  <section class="stats-grid">
+
+    <article class="stat-card">
+      <div class="stat-icon">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <h3>{{ roles.length }}</h3>
+        <p>Roles asignados</p>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div>
+        <h3>{{ recursos.length }}</h3>
+        <p>Recursos permitidos</p>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <div>
+        <h3>Activo</h3>
+        <p>Estado de sesión</p>
+      </div>
+    </article>
+
+  </section>
+
+</div>
