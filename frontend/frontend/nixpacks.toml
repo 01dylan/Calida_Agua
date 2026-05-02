@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_22"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["npx --yes @angular/cli@latest ng build"]
+cmds = ["npm run build"]
 
 [start]
 cmd = "caddy run --config /app/Caddyfile"
