@@ -12,6 +12,8 @@ import { Device, Lectura, LecturaPayload } from '../../core/models/device.model'
 import { DeviceService } from '../../core/services/device.service';
 import { LecturaService } from '../../core/services/lectura.service';
 import { StorageService } from '../../core/services/storage.service';
+import { AuthService } from '../../core/services/auth.service';
+
 
 type TabActiva = 'dispositivos' | 'lecturas';
 
@@ -53,15 +55,18 @@ export class Dispositivos implements OnInit {
   saving = false;
   errorMessage = '';
   successMessage = '';
+  esAdmin = false;
 
   constructor(
     private deviceService: DeviceService,
     private lecturaService: LecturaService,
     private storageService: StorageService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.esAdmin = this.authService.isAdmin();
     this.cargarDispositivos();
     this.cargarLecturas();
   }

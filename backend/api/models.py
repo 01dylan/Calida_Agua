@@ -17,6 +17,9 @@ class Comunidad(models.Model):
     longitud    = models.FloatField(null=True, blank=True)
     activo      = models.BooleanField(default=True)
     created_at  = models.DateTimeField(auto_now_add=True)
+    pais        = models.CharField(max_length=100, blank=True, default='Colombia')
+    departamento = models.CharField(max_length=100, blank=True, default='')
+    municipio   = models.CharField(max_length=100, blank=True, default='')
 
     class Meta:
         verbose_name        = "Comunidad"
@@ -94,9 +97,9 @@ class UsuarioRol(models.Model):
         return f"{self.usuario} → {self.rol}"
 
 
-# =====================================================
+
 #   GESTIÓN DE DISPOSITIVOS
-# =====================================================
+
 
 class Actuador(models.Model):
     TIPOS = [

@@ -64,5 +64,10 @@ urlpatterns = [
     path('api/usuarios-roles/create',              views.create_usuario_rol,  name='create_usuario_rol'),
     path('api/usuarios-roles/<int:pk>/delete',     views.delete_usuario_rol,  name='delete_usuario_rol'),
 
+    # Usuarios Django
+    path('api/users',                          views.get_django_usuarios,    name='get_django_usuarios'),
+    path('api/users/create',                   views.create_django_usuario,  name='create_django_usuario'),
+    path('api/users/<int:pk>/update',          views.update_django_usuario,  name='update_django_usuario'),
+    path('api/users/<int:pk>/delete',          views.delete_django_usuario,  name='delete_django_usuario'),
    
 ]

@@ -6,14 +6,21 @@ import { authGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './pages/login/login.component';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
+    {
+        path: '',
+        loadComponent: () =>
+            import('./features/home/home')
+                .then(m => m.Home),
+    },
     {
         path: 'login',
         component: LoginComponent
     },
     {
-        path: '',
+        path: 'admin',
         component: MainLayoutComponent,
         canActivate: [authGuard],
         children: [
@@ -52,6 +59,6 @@ export const routes: Routes = [
     },
     {
         path: '**',
-        redirectTo: 'dashboard'
+        redirectTo: ''
     }
 ];

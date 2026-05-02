@@ -5,23 +5,30 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { StorageService } from './storage.service';
 
-export interface Comunidad {
+export interface DjangoUsuario {
   id: number;
-  nombre: string;
-  descripcion?: string;
-  ubicacion?: string;
-  pais?: string;
-  departamento?: string;
-  municipio?: string;
-  latitud?: number | null;
-  longitud?: number | null;
-  activo?: boolean;
+  username: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  is_staff: boolean;
+  is_active: boolean;
+  date_joined?: string;
+}
+
+export interface CreateUsuarioPayload {
+  username: string;
+  password: string;
+  email?: string;
+  nombre?: string;
+  apellido?: string;
+  is_staff: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class ComunidadService {
+export class UserService {
 
   private base = environment.API_URL;
 
@@ -38,24 +45,24 @@ export class ComunidadService {
     });
   }
 
-  listar(): Observable<Comunidad[]> {
-    return this.http.get<Comunidad[]>(
-      `${this.base}/comunidades`,
+  listar(): Observable<DjangoUsuario[]> {
+    return this.http.get<DjangoUsuario[]>(
+      `${this.base}/users`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
-  crear(data: Partial<Comunidad>): Observable<any> {
+  crear(data: CreateUsuarioPayload): Observable<any> {
     return this.http.post<any>(
-      `${this.base}/comunidades/create`,
+      `${this.base}/users/create`,
       data,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
-  actualizar(id: number, data: Partial<Comunidad>): Observable<any> {
+  actualizar(id: number, data: Partial<CreateUsuarioPayload>): Observable<any> {
     return this.http.put<any>(
-      `${this.base}/comunidades/${id}/update`,
+      `${this.base}/users/${id}/update`,
       data,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
@@ -63,13 +70,13 @@ export class ComunidadService {
 
   eliminar(id: number): Observable<any> {
     return this.http.delete<any>(
-      `${this.base}/comunidades/${id}/delete`,
+      `${this.base}/users/${id}/delete`,
       { headers: this.getHeaders() }
     ).pipe(catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('Error en ComunidadService:', error);
+    console.error('Error en UserService:', error);
     return throwError(() => error);
   }
 }

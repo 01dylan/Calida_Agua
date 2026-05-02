@@ -1,0 +1,239 @@
+<div class="home-page">
+
+<header class="home-header">
+  <div class="header-brand">
+    <img src="logo3.jpg.jpeg" alt="AquaGuajira IoT Monitor" class="header-logo">
+    <div class="header-info">
+      <span class="header-sub">Sistema de monitoreo de calidad del agua</span>
+      <div class="header-tags">
+        <span><i class="fa-solid fa-location-dot"></i> La Guajira, Colombia</span>
+        <span><i class="fa-solid fa-graduation-cap"></i> Proyecto Universitario</span>
+        <span><i class="fa-solid fa-wifi"></i> IoT en tiempo real</span>
+      </div>
+    </div>
+  </div>
+  <button class="btn-login" (click)="irLogin()">
+    <i class="fa-solid fa-right-to-bracket"></i>
+    Iniciar sesión
+  </button>
+</header>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <h2>Monitoreo de calidad del agua</h2>
+      <p>Consulta en tiempo real el estado del agua en cada comunidad. Datos actualizados automaticamente.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <h3>{{ comunidades.length }}</h3>
+        <p>Comunidades</p>
+      </div>
+      <div class="hero-stat">
+        <h3>{{ dispositivos.length }}</h3>
+        <p>Dispositivos</p>
+      </div>
+      <div class="hero-stat">
+        <h3>{{ alertasActivas }}</h3>
+        <p>Alertas activas</p>
+      </div>
+    </div>
+  </section>
+
+<!-- SECCIÓN CONFIANZA -->
+<section class="confianza-section">
+  <div class="confianza-header">
+    <div class="confianza-badge">
+      <i class="fa-solid fa-graduation-cap"></i>
+      Proyecto Universitario
+    </div>
+    <h2>AquaGuajira</h2>
+    <p>Sistema inteligente de monitoreo de calidad del agua para las comunidades de La Guajira, Colombia. Desarrollado con tecnología IoT para garantizar el acceso a agua segura y confiable.</p>
+  </div>
+
+  <div class="confianza-grid">
+    <div class="confianza-card">
+      <div class="confianza-icon">
+        <i class="fa-solid fa-droplet"></i>
+      </div>
+      <h4>Monitoreo en tiempo real</h4>
+      <p>Sensores ESP32 instalados en puntos estratégicos miden constantemente la calidad del agua — pH, temperatura, turbidez y conductividad.</p>
+    </div>
+
+    <div class="confianza-card">
+      <div class="confianza-icon">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <h4>Alertas automáticas</h4>
+      <p>El sistema detecta automáticamente cuando los parámetros del agua salen de los rangos seguros y genera alertas inmediatas.</p>
+    </div>
+
+    <div class="confianza-card">
+      <div class="confianza-icon">
+        <i class="fa-solid fa-map-location-dot"></i>
+      </div>
+      <h4>Cobertura regional</h4>
+      <p>Múltiples comunidades de La Guajira conectadas en una sola plataforma, con datos accesibles para toda la ciudadanía.</p>
+    </div>
+
+    <div class="confianza-card">
+      <div class="confianza-icon">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h4>Datos confiables</h4>
+      <p>Información respaldada por sensores calibrados y validada por operadores capacitados para garantizar la precisión de los datos.</p>
+    </div>
+  </div>
+
+  <div class="parametros-grid">
+    <div class="parametro">
+      <div class="parametro-icon ph"><i class="fa-solid fa-flask"></i></div>
+      <div>
+        <strong>pH</strong>
+        <span>Rango seguro: 6.5 – 8.5</span>
+      </div>
+    </div>
+    <div class="parametro">
+      <div class="parametro-icon temp"><i class="fa-solid fa-temperature-half"></i></div>
+      <div>
+        <strong>Temperatura</strong>
+        <span>Máximo seguro: 30°C</span>
+      </div>
+    </div>
+    <div class="parametro">
+      <div class="parametro-icon turbidez"><i class="fa-solid fa-water"></i></div>
+      <div>
+        <strong>Turbidez</strong>
+        <span>Máximo seguro: 600 NTU</span>
+      </div>
+    </div>
+    <div class="parametro">
+      <div class="parametro-icon conductividad"><i class="fa-solid fa-bolt"></i></div>
+      <div>
+        <strong>Conductividad</strong>
+        <span>Máximo seguro: 600 µS/cm</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- MAPA -->
+  <section class="mapa-section">
+    <div class="section-header">
+      <h3><i class="fa-solid fa-map-location-dot"></i> Ubicación de comunidades</h3>
+      <span class="live-badge"><span class="live-dot"></span> En vivo</span>
+    </div>
+    <div id="mapa-home" class="mapa-container"></div>
+  </section>
+
+  <!-- COMUNIDADES Y DISPOSITIVOS -->
+  <section class="comunidades-section">
+    <div class="section-header">
+      <h3><i class="fa-solid fa-location-dot"></i> Comunidades monitoreadas</h3>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Cargando datos...
+    </div>
+
+    <div class="comunidades-grid" *ngIf="!loading">
+      <div class="comunidad-card" *ngFor="let c of comunidades; trackBy: trackById">
+
+        <div class="comunidad-header">
+          <div class="comunidad-icon">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <div>
+            <h4>{{ c.nombre }}</h4>
+            <p>{{ c.municipio || c.ubicacion || 'Sin ubicación' }}{{ c.departamento ? ', ' + c.departamento : '' }}</p>
+          </div>
+          <span class="badge badge-ok">{{ dispositivosDe(c.id) }} dispositivo(s)</span>
+        </div>
+
+        <div class="dispositivos-list">
+          <div class="dispositivo-item"
+            *ngFor="let d of dispositivosDeComunidad(c.id); trackBy: trackById">
+
+            <div class="dispositivo-header">
+              <div class="dispositivo-dot" [class.activo]="d.activo"></div>
+              <strong>{{ d.nombre }}</strong>
+              <span class="badge" [class.badge-ok]="d.activo" [class.badge-err]="!d.activo">
+                {{ d.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+
+            <div class="lectura-grid" *ngIf="ultimaLecturaDe(d.id) as lectura">
+              <div class="lectura-item">
+                <span>pH</span>
+                <strong>{{ lectura.ph }}</strong>
+              </div>
+              <div class="lectura-item">
+                <span>Temp.</span>
+                <strong>{{ lectura.temperatura }}°C</strong>
+              </div>
+              <div class="lectura-item">
+                <span>Turbidez</span>
+                <strong>{{ lectura.turbidez }} NTU</strong>
+              </div>
+              <div class="lectura-item">
+                <span>Conductividad</span>
+                <strong>{{ lectura.conductividad }} µS</strong>
+              </div>
+            </div>
+
+            <div class="lectura-estado" *ngIf="ultimaLecturaDe(d.id) as lectura">
+              <span class="badge" [ngClass]="estadoClass(lectura.estado)">
+                {{ lectura.estado }}
+              </span>
+              <small>{{ lectura.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+            </div>
+
+            <div class="sin-lectura" *ngIf="!ultimaLecturaDe(d.id)">
+              <i class="fa-solid fa-circle-info"></i> Sin lecturas registradas
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div class="empty-state" *ngIf="comunidades.length === 0">
+        <i class="fa-solid fa-location-dot"></i>
+        <p>No hay comunidades registradas aún</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALERTAS RECIENTES -->
+  <section class="alertas-section" *ngIf="alertasActivas > 0">
+    <div class="section-header">
+      <h3><i class="fa-solid fa-triangle-exclamation"></i> Alertas activas</h3>
+      <span class="badge badge-err">{{ alertasActivas }} alerta(s)</span>
+    </div>
+
+    <div class="alertas-grid">
+      <div class="alerta-card" *ngFor="let l of lecturas; trackBy: trackById"
+        [class.alerta-rojo]="l.estado === 'ADVERTENCIA'"
+        [class.alerta-amarillo]="l.estado === 'PRECAUCION'">
+        <div class="alerta-header">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span class="badge" [ngClass]="estadoClass(l.estado)">{{ l.estado }}</span>
+          <small>{{ l.fecha | date:'dd/MM HH:mm' }}</small>
+        </div>
+        <div class="alerta-valores">
+          <span>pH: {{ l.ph }}</span>
+          <span>Temp: {{ l.temperatura }}°C</span>
+          <span>Turbidez: {{ l.turbidez }} NTU</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="home-footer">
+    <p>Sistema de monitoreo de calidad del agua · Datos actualizados cada 30 segundos</p>
+    <button class="btn-login-footer" (click)="irLogin()">
+      <i class="fa-solid fa-lock"></i> Acceso administrativo
+    </button>
+  </footer>
+
+</div>

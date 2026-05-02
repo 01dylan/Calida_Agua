@@ -105,6 +105,7 @@
             <i class="fa-solid fa-pen"></i>
           </button>
           <button class="btn-icon danger" title="Eliminar"
+            *ngIf = "esAdmin"
             [disabled]="deletingId === d.id"
             (click)="eliminarDispositivo(d)">
             <i class="fa-solid" [class.fa-trash]="deletingId !== d.id" [class.fa-spinner]="deletingId === d.id" [class.fa-spin]="deletingId === d.id"></i>

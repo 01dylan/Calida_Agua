@@ -53,7 +53,10 @@ export class LoginComponent {
         this.errorMessage = '';
         this.cdr.detectChanges();
 
-        this.router.navigate(['/dashboard']);
+        const usuario = this.authService.isAdmin()
+        ? '/admin/dashboard'
+        : '/admin/dashboard';
+this.router.navigate([usuario]);
       },
       error: (error) => {
         console.error('Error en login:', error);

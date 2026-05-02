@@ -1,11 +1,22 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component, OnInit, AfterViewInit,
+  ChangeDetectionStrategy, ChangeDetectorRef,
+  ElementRef, ViewChild
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Chart, registerables } from 'chart.js';
+
 import { StorageService } from '../../core/services/storage.service';
 import { DeviceService } from '../../core/services/device.service';
 import { LecturaService } from '../../core/services/lectura.service';
+import { ComunidadService, Comunidad } from '../../core/services/comunidad.service';
 import { Usuario } from '../../core/models/usuario.model';
 import { Device, Lectura } from '../../core/models/device.model';
+
+Chart.register(...registerables);
+
+type TabDashboard = 'inicio' | 'graficas' | 'resumen';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,18 +26,29 @@ import { Device, Lectura } from '../../core/models/device.model';
   styleUrl: './dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, AfterViewInit {
+
+  @ViewChild('chartPh') chartPhRef!: ElementRef;
+  @ViewChild('chartTemp') chartTempRef!: ElementRef;
+  @ViewChild('chartTurbidez') chartTurbidezRef!: ElementRef;
+  @ViewChild('chartConductividad') chartConductividadRef!: ElementRef;
+
+  tabActiva: TabDashboard = 'inicio';
 
   usuario: Usuario | null = null;
   dispositivos: Device[] = [];
   lecturas: Lectura[] = [];
+  comunidades: Comunidad[] = [];
   loading = true;
   fechaHoy = new Date();
+
+  private charts: Chart[] = [];
 
   constructor(
     private storageService: StorageService,
     private deviceService: DeviceService,
     private lecturaService: LecturaService,
+    private comunidadService: ComunidadService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -34,6 +56,8 @@ export class DashboardComponent implements OnInit {
     this.usuario = this.storageService.getUsuario();
     this.cargarDatos();
   }
+
+  ngAfterViewInit(): void {}
 
   cargarDatos(): void {
     this.deviceService.listar().subscribe({
@@ -43,7 +67,14 @@ export class DashboardComponent implements OnInit {
       }
     });
 
-    this.lecturaService.listar(undefined, undefined, 10).subscribe({
+    this.comunidadService.listar().subscribe({
+      next: (data) => {
+        this.comunidades = data ?? [];
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.lecturaService.listar(undefined, undefined, 50).subscribe({
       next: (data) => {
         this.lecturas = data ?? [];
         this.loading = false;
@@ -56,34 +87,92 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  get totalDispositivos(): number {
-    return this.dispositivos.length;
+  cambiarTab(tab: TabDashboard): void {
+    this.tabActiva = tab;
+    this.cdr.markForCheck();
+    if (tab === 'graficas') {
+      setTimeout(() => this.construirGraficas(), 150);
+    }
   }
 
-  get dispositivosActivos(): number {
-    return this.dispositivos.filter(d => d.activo).length;
+  construirGraficas(): void {
+    this.charts.forEach(c => c.destroy());
+    this.charts = [];
+
+    const lecturasOrdenadas = [...this.lecturas].reverse();
+    const labels = lecturasOrdenadas.map(l =>
+      new Date(l.fecha).toLocaleString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    );
+
+    const config = (label: string, data: number[], color: string) => ({
+      type: 'line' as const,
+      data: {
+        labels,
+        datasets: [{
+          label,
+          data,
+          borderColor: color,
+          backgroundColor: color + '20',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { mode: 'index' as const, intersect: false }
+        },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 8, font: { size: 11 }, color: '#94a3b8' },
+            grid: { color: '#f1f5f9' }
+          },
+          y: {
+            ticks: { font: { size: 11 }, color: '#94a3b8' },
+            grid: { color: '#f1f5f9' }
+          }
+        }
+      }
+    });
+
+    if (this.chartPhRef)
+      this.charts.push(new Chart(this.chartPhRef.nativeElement, config('pH', lecturasOrdenadas.map(l => l.ph), '#0F6E56')));
+
+    if (this.chartTempRef)
+      this.charts.push(new Chart(this.chartTempRef.nativeElement, config('Temperatura °C', lecturasOrdenadas.map(l => l.temperatura), '#2563eb')));
+
+    if (this.chartTurbidezRef)
+      this.charts.push(new Chart(this.chartTurbidezRef.nativeElement, config('Turbidez NTU', lecturasOrdenadas.map(l => l.turbidez), '#d97706')));
+
+    if (this.chartConductividadRef)
+      this.charts.push(new Chart(this.chartConductividadRef.nativeElement, config('Conductividad µS', lecturasOrdenadas.map(l => l.conductividad), '#7c3aed')));
   }
 
-  get totalLecturas(): number {
-    return this.lecturas.length;
-  }
-
+  // GETTERS
+  get totalDispositivos(): number { return this.dispositivos.length; }
+  get dispositivosActivos(): number { return this.dispositivos.filter(d => d.activo).length; }
+  get totalLecturas(): number { return this.lecturas.length; }
   get alertasHoy(): number {
-    return this.lecturas.filter(l =>
-      l.estado === 'ADVERTENCIA' || l.estado === 'PRECAUCION'
-    ).length;
+    return this.lecturas.filter(l => l.estado === 'ADVERTENCIA' || l.estado === 'PRECAUCION').length;
   }
-
-  get ultimaLectura(): Lectura | null {
-    return this.lecturas.length > 0 ? this.lecturas[0] : null;
-  }
-
+  get ultimaLectura(): Lectura | null { return this.lecturas.length > 0 ? this.lecturas[0] : null; }
   get estadoGeneral(): string {
-    const peligro = this.lecturas.some(l => l.estado === 'ADVERTENCIA');
-    const precaucion = this.lecturas.some(l => l.estado === 'PRECAUCION');
-    if (peligro) return 'ROJO';
-    if (precaucion) return 'AMARILLO';
+    if (this.lecturas.some(l => l.estado === 'ADVERTENCIA')) return 'ROJO';
+    if (this.lecturas.some(l => l.estado === 'PRECAUCION')) return 'AMARILLO';
     return 'VERDE';
+  }
+
+  dispositivosDe(comunidadId: number): Device[] {
+    return this.dispositivos.filter(d => d.comunidad_id === comunidadId);
+  }
+
+  lecturasDeDispositivo(dispositivoId: number): Lectura | null {
+    return this.lecturas.find(l => l.dispositivo_id === dispositivoId) || null;
   }
 
   estadoClass(estado: string): string {

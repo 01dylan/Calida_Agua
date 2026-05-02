@@ -1,146 +1,243 @@
 <div class="dashboard">
 
-  <!-- BIENVENIDA -->
-  <section class="welcome-card">
-    <div class="welcome-left">
-      <p class="welcome-date">{{ fechaHoy | date:'EEEE, d MMMM yyyy' : '' : 'es' }}</p>
-      <h2>Bienvenido, {{ usuario?.nombre || usuario?.username || 'Administrador' }}</h2>
-      <p class="welcome-sub">Panel de monitoreo de calidad del agua</p>
-    </div>
-    <div class="estado-general" [ngClass]="{
-      'estado-verde': estadoGeneral === 'VERDE',
-      'estado-amarillo': estadoGeneral === 'AMARILLO',
-      'estado-rojo': estadoGeneral === 'ROJO'
-    }">
-      <i class="fa-solid fa-droplet"></i>
-      <div>
-        <strong>{{ estadoGeneral === 'VERDE' ? 'Agua apta' : estadoGeneral === 'AMARILLO' ? 'Precaución' : 'Alerta' }}</strong>
-        <span>Estado general</span>
-      </div>
-    </div>
-  </section>
+  <!-- TABS -->
+  <div class="dash-tabs">
+    <button class="dash-tab" [class.active]="tabActiva === 'inicio'" (click)="cambiarTab('inicio')">
+      <i class="fa-solid fa-gauge"></i> Inicio
+    </button>
+    <button class="dash-tab" [class.active]="tabActiva === 'graficas'" (click)="cambiarTab('graficas')">
+      <i class="fa-solid fa-chart-line"></i> Gráficas
+    </button>
+    <button class="dash-tab" [class.active]="tabActiva === 'resumen'" (click)="cambiarTab('resumen')">
+      <i class="fa-solid fa-clipboard-list"></i> Resumen
+    </button>
+  </div>
 
-  <!-- MÉTRICAS -->
-  <section class="metrics-grid">
-    <article class="metric-card">
-      <div class="metric-icon green">
-        <i class="fa-solid fa-microchip"></i>
-      </div>
-      <div>
-        <h3>{{ dispositivosActivos }} / {{ totalDispositivos }}</h3>
-        <p>Dispositivos activos</p>
-      </div>
-    </article>
+  <!-- ==================== TAB INICIO ==================== -->
+  <div [hidden]="tabActiva !== 'inicio'">
 
-    <article class="metric-card">
-      <div class="metric-icon blue">
+    <section class="welcome-card">
+      <div class="welcome-left">
+        <p class="welcome-date">{{ fechaHoy | date:'EEEE, d MMMM yyyy' : '' : 'es' }}</p>
+        <h2>Bienvenido, {{ usuario?.nombre || usuario?.username || 'Administrador' }}</h2>
+        <p class="welcome-sub">Panel de monitoreo de calidad del agua</p>
+      </div>
+      <div class="estado-general" [ngClass]="{
+        'estado-verde': estadoGeneral === 'VERDE',
+        'estado-amarillo': estadoGeneral === 'AMARILLO',
+        'estado-rojo': estadoGeneral === 'ROJO'
+      }">
         <i class="fa-solid fa-droplet"></i>
-      </div>
-      <div>
-        <h3>{{ totalLecturas }}</h3>
-        <p>Lecturas recientes</p>
-      </div>
-    </article>
-
-    <article class="metric-card">
-      <div class="metric-icon amber">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-      </div>
-      <div>
-        <h3>{{ alertasHoy }}</h3>
-        <p>Alertas activas</p>
-      </div>
-    </article>
-
-    <article class="metric-card">
-      <div class="metric-icon purple">
-        <i class="fa-solid fa-clock"></i>
-      </div>
-      <div>
-        <h3>{{ ultimaLectura ? tiempoTranscurrido(ultimaLectura.fecha) : 'Sin datos' }}</h3>
-        <p>Última lectura</p>
-      </div>
-    </article>
-  </section>
-
-  <!-- CONTENIDO PRINCIPAL -->
-  <div class="main-grid">
-
-    <!-- ÚLTIMAS LECTURAS -->
-    <section class="card">
-      <div class="card-header">
-        <h3><i class="fa-solid fa-list"></i> Últimas lecturas</h3>
-        <a routerLink="/dispositivos" class="ver-mas">Ver todas →</a>
-      </div>
-
-      <div class="loading-state" *ngIf="loading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Cargando...
-      </div>
-
-      <div class="empty-state" *ngIf="!loading && lecturas.length === 0">
-        <i class="fa-solid fa-droplet"></i>
-        <p>No hay lecturas registradas aún</p>
-        <a routerLink="/dispositivos" class="btn-link">Registrar lectura</a>
-      </div>
-
-      <div class="table-wrap" *ngIf="!loading && lecturas.length > 0">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>pH</th>
-              <th>Temp.</th>
-              <th>Turbidez</th>
-              <th>Estado</th>
-              <th>Fuente</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let l of lecturas">
-              <td>{{ l.fecha | date:'dd/MM HH:mm' }}</td>
-              <td>{{ l.ph }}</td>
-              <td>{{ l.temperatura }}°C</td>
-              <td>{{ l.turbidez }} NTU</td>
-              <td>
-                <span class="badge" [ngClass]="estadoClass(l.estado)">{{ l.estado }}</span>
-              </td>
-              <td>
-                <span class="badge" [class.badge-manual]="l.fuente === 'MANUAL'" [class.badge-ok]="l.fuente === 'ESP32'">
-                  {{ l.fuente }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- DISPOSITIVOS -->
-    <section class="card">
-      <div class="card-header">
-        <h3><i class="fa-solid fa-microchip"></i> Dispositivos</h3>
-        <a routerLink="/dispositivos" class="ver-mas">Gestionar →</a>
-      </div>
-
-      <div class="empty-state" *ngIf="dispositivos.length === 0">
-        <i class="fa-solid fa-microchip"></i>
-        <p>No hay dispositivos registrados</p>
-      </div>
-
-      <div class="device-list" *ngIf="dispositivos.length > 0">
-        <div class="device-item" *ngFor="let d of dispositivos">
-          <div class="device-dot" [class.activo]="d.activo"></div>
-          <div class="device-info">
-            <strong>{{ d.nombre }}</strong>
-            <span>{{ d.ubicacion || 'Sin ubicación' }} · {{ d.mac_address || 'Sin MAC' }}</span>
-          </div>
-          <span class="badge" [class.badge-ok]="d.activo" [class.badge-err]="!d.activo">
-            {{ d.activo ? 'Activo' : 'Inactivo' }}
-          </span>
+        <div>
+          <strong>{{ estadoGeneral === 'VERDE' ? 'Agua apta' : estadoGeneral === 'AMARILLO' ? 'Precaución' : 'Alerta' }}</strong>
+          <span>Estado general</span>
         </div>
       </div>
     </section>
 
+    <section class="metrics-grid">
+      <article class="metric-card">
+        <div class="metric-icon green"><i class="fa-solid fa-microchip"></i></div>
+        <div><h3>{{ dispositivosActivos }} / {{ totalDispositivos }}</h3><p>Dispositivos activos</p></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-icon blue"><i class="fa-solid fa-droplet"></i></div>
+        <div><h3>{{ totalLecturas }}</h3><p>Lecturas recientes</p></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div><h3>{{ alertasHoy }}</h3><p>Alertas activas</p></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-icon purple"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <h3>{{ ultimaLectura ? tiempoTranscurrido(ultimaLectura.fecha) : 'Sin datos' }}</h3>
+          <p>Última lectura</p>
+        </div>
+      </article>
+    </section>
+
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-list"></i> Últimas lecturas</h3>
+          <a routerLink="/admin/dispositivos" class="ver-mas">Ver todas →</a>
+        </div>
+        <div class="loading-state" *ngIf="loading">
+          <i class="fa-solid fa-spinner fa-spin"></i> Cargando...
+        </div>
+        <div class="empty-state" *ngIf="!loading && lecturas.length === 0">
+          <i class="fa-solid fa-droplet"></i>
+          <p>No hay lecturas registradas aún</p>
+          <a routerLink="/admin/dispositivos" class="btn-link">Registrar lectura</a>
+        </div>
+        <div class="table-wrap" *ngIf="!loading && lecturas.length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>pH</th><th>Temp.</th><th>Turbidez</th><th>Estado</th><th>Fuente</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of lecturas">
+                <td>{{ l.fecha | date:'dd/MM HH:mm' }}</td>
+                <td>{{ l.ph }}</td>
+                <td>{{ l.temperatura }}°C</td>
+                <td>{{ l.turbidez }} NTU</td>
+                <td><span class="badge" [ngClass]="estadoClass(l.estado)">{{ l.estado }}</span></td>
+                <td>
+                  <span class="badge" [class.badge-manual]="l.fuente === 'MANUAL'" [class.badge-ok]="l.fuente === 'ESP32'">
+                    {{ l.fuente }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-microchip"></i> Dispositivos</h3>
+          <a routerLink="/admin/dispositivos" class="ver-mas">Gestionar →</a>
+        </div>
+        <div class="empty-state" *ngIf="dispositivos.length === 0">
+          <i class="fa-solid fa-microchip"></i>
+          <p>No hay dispositivos registrados</p>
+        </div>
+        <div class="device-list" *ngIf="dispositivos.length > 0">
+          <div class="device-item" *ngFor="let d of dispositivos">
+            <div class="device-dot" [class.activo]="d.activo"></div>
+            <div class="device-info">
+              <strong>{{ d.nombre }}</strong>
+              <span>{{ d.ubicacion || 'Sin ubicación' }} · {{ d.mac_address || 'Sin MAC' }}</span>
+            </div>
+            <span class="badge" [class.badge-ok]="d.activo" [class.badge-err]="!d.activo">
+              {{ d.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB GRÁFICAS ==================== -->
+  <div [hidden]="tabActiva !== 'graficas'">
+    <div class="graficas-header">
+      <h3>Gráficas de lecturas</h3>
+      <p>Histórico de los últimos 50 registros por parámetro</p>
+    </div>
+
+    <div class="graficas-grid">
+      <div class="grafica-card">
+        <div class="grafica-titulo">
+          <span class="grafica-dot" style="background:#0F6E56"></span>pH
+        </div>
+        <div class="grafica-wrap"><canvas #chartPh></canvas></div>
+        <div class="grafica-rango">Rango normal: 6.5 – 8.5</div>
+      </div>
+      <div class="grafica-card">
+        <div class="grafica-titulo">
+          <span class="grafica-dot" style="background:#2563eb"></span>Temperatura (°C)
+        </div>
+        <div class="grafica-wrap"><canvas #chartTemp></canvas></div>
+        <div class="grafica-rango">Máximo seguro: 30°C</div>
+      </div>
+      <div class="grafica-card">
+        <div class="grafica-titulo">
+          <span class="grafica-dot" style="background:#d97706"></span>Turbidez (NTU)
+        </div>
+        <div class="grafica-wrap"><canvas #chartTurbidez></canvas></div>
+        <div class="grafica-rango">Alerta: &gt; 600 NTU</div>
+      </div>
+      <div class="grafica-card">
+        <div class="grafica-titulo">
+          <span class="grafica-dot" style="background:#7c3aed"></span>Conductividad (µS)
+        </div>
+        <div class="grafica-wrap"><canvas #chartConductividad></canvas></div>
+        <div class="grafica-rango">Alerta: &gt; 600 µS</div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="lecturas.length === 0">
+      <i class="fa-solid fa-chart-line"></i>
+      <p>No hay lecturas para graficar</p>
+    </div>
+  </div>
+
+  <!-- ==================== TAB RESUMEN ==================== -->
+  <div [hidden]="tabActiva !== 'resumen'">
+    <div class="graficas-header">
+      <h3>Resumen general del sistema</h3>
+      <p>Estado actual de todas las comunidades y dispositivos</p>
+    </div>
+
+    <div class="resumen-stats">
+      <div class="resumen-stat">
+        <div class="resumen-icon" style="background:#E1F5EE;color:#0F6E56">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div><h4>{{ comunidades.length }}</h4><p>Comunidades</p></div>
+      </div>
+      <div class="resumen-stat">
+        <div class="resumen-icon" style="background:#dbeafe;color:#1d4ed8">
+          <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div><h4>{{ totalDispositivos }}</h4><p>Dispositivos</p></div>
+      </div>
+      <div class="resumen-stat">
+        <div class="resumen-icon" style="background:#fef3c7;color:#92400e">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div><h4>{{ alertasHoy }}</h4><p>Alertas activas</p></div>
+      </div>
+      <div class="resumen-stat">
+        <div class="resumen-icon" style="background:#ede9fe;color:#6d28d9">
+          <i class="fa-solid fa-droplet"></i>
+        </div>
+        <div><h4>{{ totalLecturas }}</h4><p>Lecturas totales</p></div>
+      </div>
+    </div>
+
+    <div class="resumen-comunidades">
+      <div class="resumen-comunidad" *ngFor="let c of comunidades">
+        <div class="resumen-comunidad-header">
+          <div class="resumen-comunidad-icon">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <div>
+            <h4>{{ c.nombre }}</h4>
+            <p>{{ c.municipio || c.ubicacion || 'Sin ubicación' }}{{ c.departamento ? ', ' + c.departamento : '' }}</p>
+          </div>
+          <span class="badge" [class.badge-ok]="c.activo !== false" [class.badge-err]="c.activo === false">
+            {{ c.activo !== false ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+
+        <div class="resumen-dispositivos">
+          <div class="resumen-dispositivo" *ngFor="let d of dispositivosDe(c.id)">
+            <div class="dispositivo-dot" [class.activo]="d.activo"></div>
+            <div class="resumen-dispositivo-info">
+              <strong>{{ d.nombre }}</strong>
+              <div class="resumen-lectura" *ngIf="lecturasDeDispositivo(d.id) as l">
+                <span>pH: <strong>{{ l.ph }}</strong></span>
+                <span>Temp: <strong>{{ l.temperatura }}°C</strong></span>
+                <span>Turbidez: <strong>{{ l.turbidez }} NTU</strong></span>
+                <span>Conductividad: <strong>{{ l.conductividad }} µS</strong></span>
+                <span class="badge" [ngClass]="estadoClass(l.estado)">{{ l.estado }}</span>
+              </div>
+              <div class="sin-lectura" *ngIf="!lecturasDeDispositivo(d.id)">
+                <i class="fa-solid fa-circle-info"></i> Sin lecturas
+              </div>
+            </div>
+          </div>
+          <div class="sin-dispositivos" *ngIf="dispositivosDe(c.id).length === 0">
+            <i class="fa-solid fa-circle-info"></i> Sin dispositivos registrados
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

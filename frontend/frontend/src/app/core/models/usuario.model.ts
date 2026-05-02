@@ -13,3 +13,12 @@ export interface PaginatedUsuarioResponse {
   previous: string | null;
   results: Usuario[];
 }
+export interface Usuario {
+  idusuarios: number;
+  username: string;
+  email?: string;
+  nombre?: string;
+  apellido?: string;
+  estado: string;
+  is_staff?: boolean;
+}

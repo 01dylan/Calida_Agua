@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ComunidadService, Comunidad } from '../../core/services/comunidad.service';
 import { DeviceService } from '../../core/services/device.service';
-
+import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-comunidades',
   standalone: true,
@@ -39,16 +39,19 @@ export class Comunidades implements OnInit {
 
   // Conteo de dispositivos por comunidad
   dispositivosPorComunidad: Record<number, number> = {};
+  esAdmin = false;
 
   constructor(
     private comunidadService: ComunidadService,
     private deviceService: DeviceService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
-  }
+  this.esAdmin = this.authService.isAdmin();
+  this.cargarDatos();
+}
 
   cargarDatos(): void {
     this.loading = true;

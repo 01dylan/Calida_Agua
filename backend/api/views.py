@@ -44,13 +44,12 @@ def me(request):
     })
 
 
-# =====================================================
 #   COMUNIDADES
-# =====================================================
 def get_comunidades(request):
     data = list(Comunidad.objects.values())
     return JsonResponse(data, safe=False)
 
+@csrf_exempt
 @csrf_exempt
 def create_comunidad(request):
     if request.method != "POST":
@@ -58,11 +57,14 @@ def create_comunidad(request):
     try:
         data = json.loads(request.body)
         obj  = Comunidad.objects.create(
-            nombre      = data["nombre"],
-            descripcion = data.get("descripcion", ""),
-            ubicacion   = data.get("ubicacion", ""),
-            latitud     = data.get("latitud"),
-            longitud    = data.get("longitud"),
+            nombre       = data["nombre"],
+            descripcion  = data.get("descripcion", ""),
+            ubicacion    = data.get("ubicacion", ""),
+            pais         = data.get("pais", "Colombia"),
+            departamento = data.get("departamento", ""),
+            municipio    = data.get("municipio", ""),
+            latitud      = data.get("latitud"),
+            longitud     = data.get("longitud"),
         )
         return JsonResponse({"ok": True, "id": obj.id})
     except Exception as e:
@@ -75,10 +77,15 @@ def update_comunidad(request, pk):
     try:
         obj  = Comunidad.objects.get(id=pk)
         data = json.loads(request.body)
-        obj.nombre      = data.get("nombre",      obj.nombre)
-        obj.descripcion = data.get("descripcion", obj.descripcion)
-        obj.ubicacion   = data.get("ubicacion",   obj.ubicacion)
-        obj.activo      = data.get("activo",      obj.activo)
+        obj.nombre       = data.get("nombre",       obj.nombre)
+        obj.descripcion  = data.get("descripcion",  obj.descripcion)
+        obj.ubicacion    = data.get("ubicacion",    obj.ubicacion)
+        obj.pais         = data.get("pais",         obj.pais)
+        obj.departamento = data.get("departamento", obj.departamento)
+        obj.municipio    = data.get("municipio",    obj.municipio)
+        obj.latitud      = data.get("latitud",      obj.latitud)
+        obj.longitud     = data.get("longitud",     obj.longitud)
+        obj.activo       = data.get("activo",       obj.activo)
         obj.save()
         return JsonResponse({"ok": True})
     except Comunidad.DoesNotExist:
@@ -97,9 +104,9 @@ def delete_comunidad(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   DISPOSITIVOS
-# =====================================================
+
 def get_dispositivos(request):
     comunidad_id = request.GET.get("comunidad_id")
     qs = Dispositivo.objects.all()
@@ -156,9 +163,9 @@ def delete_dispositivo(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   SENSORES
-# =====================================================
+
 def get_sensores(request):
     return JsonResponse(list(Sensor.objects.values()), safe=False)
 
@@ -189,9 +196,10 @@ def delete_sensor(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
+
 #   LECTURAS
-# =====================================================
+
 def get_lecturas(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     fuente         = request.GET.get("fuente")
@@ -344,9 +352,9 @@ def delete_lectura(request, pk):
     except LecturaSensor.DoesNotExist:
         return JsonResponse({"error": "No encontrado"}, status=404)
 
-# =====================================================
+
 #   ALERTAS
-# =====================================================
+
 def get_alertas(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     qs = Alerta.objects.all()
@@ -355,9 +363,9 @@ def get_alertas(request):
     return JsonResponse(list(qs.values()[:50]), safe=False)
 
 
-# =====================================================
+
 #   UMBRALES
-# =====================================================
+
 def get_umbral(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     try:
@@ -401,9 +409,9 @@ def update_umbral(request, dispositivo_id):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-# =====================================================
+
 #   COMANDOS
-# =====================================================
+
 def get_comandos(request):
     return JsonResponse(list(ComandoRemoto.objects.values()[:50]), safe=False)
 
@@ -435,9 +443,9 @@ def get_latest_comando(request):
         return JsonResponse({"comando": None})
 
 
-# =====================================================
+
 #   USUARIOS
-# =====================================================
+
 def get_usuarios(request):
     return JsonResponse(list(Usuario.objects.values(
         "id","nombre","apellido","correo","telefono","activo","created_at"
@@ -472,9 +480,9 @@ def delete_usuario(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   LOGS
-# =====================================================
+
 @csrf_exempt
 def create_log(request):
     if request.method != "POST":
@@ -490,9 +498,9 @@ def create_log(request):
         return JsonResponse({"ok": True, "id": obj.id})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-# =====================================================
+
 #   ROLES
-# =====================================================
+
 def get_roles(request):
     return JsonResponse(list(Rol.objects.values(
         'id', 'nombre', 'descripcion', 'activo'
@@ -574,4 +582,74 @@ def delete_usuario_rol(request, pk):
         UsuarioRol.objects.get(id=pk).delete()
         return JsonResponse({"ok": True})
     except UsuarioRol.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+
+# =====================================================
+#   USUARIOS DJANGO (para gestión desde el frontend)
+# =====================================================
+def get_django_usuarios(request):
+    from django.contrib.auth.models import User
+    usuarios = User.objects.all().values(
+        'id', 'username', 'email', 'first_name', 
+        'last_name', 'is_staff', 'is_active', 'date_joined'
+    )
+    return JsonResponse(list(usuarios), safe=False)
+
+@csrf_exempt
+def create_django_usuario(request):
+    from django.contrib.auth.models import User
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        if User.objects.filter(username=data["username"]).exists():
+            return JsonResponse({"error": "El usuario ya existe"}, status=400)
+        user = User.objects.create_user(
+            username   = data["username"],
+            password   = data["password"],
+            email      = data.get("email", ""),
+            first_name = data.get("nombre", ""),
+            last_name  = data.get("apellido", ""),
+            is_staff   = data.get("is_staff", False),
+        )
+        return JsonResponse({
+            "ok": True,
+            "id": user.id,
+            "username": user.username,
+            "is_staff": user.is_staff
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def update_django_usuario(request, pk):
+    from django.contrib.auth.models import User
+    if request.method != "PUT":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        user = User.objects.get(id=pk)
+        data = json.loads(request.body)
+        user.email      = data.get("email",     user.email)
+        user.first_name = data.get("nombre",    user.first_name)
+        user.last_name  = data.get("apellido",  user.last_name)
+        user.is_staff   = data.get("is_staff",  user.is_staff)
+        user.is_active  = data.get("is_active", user.is_active)
+        if data.get("password"):
+            user.set_password(data["password"])
+        user.save()
+        return JsonResponse({"ok": True})
+    except User.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_django_usuario(request, pk):
+    from django.contrib.auth.models import User
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        User.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except User.DoesNotExist:
         return JsonResponse({"error": "No encontrado"}, status=404)

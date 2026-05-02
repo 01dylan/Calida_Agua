@@ -1,6 +1,5 @@
-// src/app/core/services/menu.service.ts
-
 import { Injectable } from '@angular/core';
+import { AuthService } from './auth.service';
 
 export interface MenuItem {
   id: number;
@@ -11,6 +10,7 @@ export interface MenuItem {
   padre: number | null;
   estado: string;
   items: MenuItem[];
+  soloAdmin?: boolean;
 }
 
 @Injectable({
@@ -22,7 +22,7 @@ export class MenuService {
     {
       id: 1,
       nombre: 'Panel Principal',
-      path: '/dashboard',
+      path: '/admin/dashboard',
       icono: 'fa-solid fa-gauge',
       orden: 1,
       padre: null,
@@ -32,7 +32,7 @@ export class MenuService {
     {
       id: 2,
       nombre: 'Comunidades',
-      path: '/comunidades',
+      path: '/admin/comunidades',
       icono: 'fa-solid fa-location-dot',
       orden: 2,
       padre: null,
@@ -42,7 +42,7 @@ export class MenuService {
     {
       id: 3,
       nombre: 'Dispositivos y lecturas',
-      path: '/dispositivos',
+      path: '/admin/dispositivos',
       icono: 'fa-solid fa-microchip',
       orden: 3,
       padre: null,
@@ -52,7 +52,7 @@ export class MenuService {
     {
       id: 4,
       nombre: 'Monitoreo ESP32',
-      path: '/monitoreo',
+      path: '/admin/monitoreo',
       icono: 'fa-solid fa-droplet',
       orden: 4,
       padre: null,
@@ -62,17 +62,21 @@ export class MenuService {
     {
       id: 5,
       nombre: 'Roles y permisos',
-      path: '/roles',
+      path: '/admin/roles',
       icono: 'fa-solid fa-user-shield',
       orden: 5,
       padre: null,
       estado: 'activo',
-      items: []
+      items: [],
+      soloAdmin: true
     }
   ];
 
+  constructor(private authService: AuthService) {}
+
   getMenu(): MenuItem[] {
-    return this.menuFijo;
+    const esAdmin = this.authService.isAdmin();
+    return this.menuFijo.filter(item => !item.soloAdmin || esAdmin);
   }
 
   hasAccess(path: string): boolean {
