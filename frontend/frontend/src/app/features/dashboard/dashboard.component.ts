@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, AfterViewInit,
+  Component, OnInit, OnDestroy, AfterViewInit,
   ChangeDetectionStrategy, ChangeDetectorRef,
   ElementRef, ViewChild
 } from '@angular/core';
@@ -26,7 +26,7 @@ type TabDashboard = 'inicio' | 'graficas' | 'resumen';
   styleUrl: './dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit, AfterViewInit {
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('chartPh') chartPhRef!: ElementRef;
   @ViewChild('chartTemp') chartTempRef!: ElementRef;
@@ -41,8 +41,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   comunidades: Comunidad[] = [];
   loading = true;
   fechaHoy = new Date();
+  ultimaActualizacion: Date | null = null;   // <-- para mostrar en pantalla
 
   private charts: Chart[] = [];
+  private pollingInterval: any = null;
+  private readonly INTERVALO_MS = 5000;      // <-- refresca cada 5 segundos
 
   constructor(
     private storageService: StorageService,
@@ -54,12 +57,35 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.usuario = this.storageService.getUsuario();
-    this.cargarDatos();
+    this.cargarDatosEstaticos();   // dispositivos y comunidades solo 1 vez
+    this.cargarLecturas();         // primera carga inmediata
+    this.iniciarPolling();         // luego cada 5s
   }
 
   ngAfterViewInit(): void {}
 
-  cargarDatos(): void {
+  ngOnDestroy(): void {
+    this.detenerPolling();         // limpia el intervalo al salir del componente
+  }
+
+  // ── Polling ──────────────────────────────────────────
+
+  private iniciarPolling(): void {
+    this.pollingInterval = setInterval(() => {
+      this.cargarLecturas();
+    }, this.INTERVALO_MS);
+  }
+
+  private detenerPolling(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
+  // ── Carga de datos ────────────────────────────────────
+
+  cargarDatosEstaticos(): void {
     this.deviceService.listar().subscribe({
       next: (data) => {
         this.dispositivos = data ?? [];
@@ -73,11 +99,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+  }
 
+  cargarLecturas(): void {
     this.lecturaService.listar(undefined, undefined, 50).subscribe({
       next: (data) => {
         this.lecturas = data ?? [];
+        this.ultimaActualizacion = new Date();
         this.loading = false;
+
+        // Si las gráficas están visibles, las actualiza también
+        if (this.tabActiva === 'graficas') {
+          setTimeout(() => this.construirGraficas(), 100);
+        }
+
         this.cdr.markForCheck();
       },
       error: () => {
@@ -87,6 +122,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // ── Tabs ──────────────────────────────────────────────
+
   cambiarTab(tab: TabDashboard): void {
     this.tabActiva = tab;
     this.cdr.markForCheck();
@@ -95,13 +132,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // ── Gráficas ──────────────────────────────────────────
+
   construirGraficas(): void {
     this.charts.forEach(c => c.destroy());
     this.charts = [];
 
     const lecturasOrdenadas = [...this.lecturas].reverse();
     const labels = lecturasOrdenadas.map(l =>
-      new Date(l.fecha).toLocaleString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      new Date(l.fecha).toLocaleString('es-CO', {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      })
     );
 
     const config = (label: string, data: number[], color: string) => ({
@@ -141,29 +183,38 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     });
 
     if (this.chartPhRef)
-      this.charts.push(new Chart(this.chartPhRef.nativeElement, config('pH', lecturasOrdenadas.map(l => l.ph), '#0F6E56')));
+      this.charts.push(new Chart(this.chartPhRef.nativeElement,
+        config('pH', lecturasOrdenadas.map(l => l.ph), '#0F6E56')));
 
     if (this.chartTempRef)
-      this.charts.push(new Chart(this.chartTempRef.nativeElement, config('Temperatura °C', lecturasOrdenadas.map(l => l.temperatura), '#2563eb')));
+      this.charts.push(new Chart(this.chartTempRef.nativeElement,
+        config('Temperatura °C', lecturasOrdenadas.map(l => l.temperatura), '#2563eb')));
 
     if (this.chartTurbidezRef)
-      this.charts.push(new Chart(this.chartTurbidezRef.nativeElement, config('Turbidez NTU', lecturasOrdenadas.map(l => l.turbidez), '#d97706')));
+      this.charts.push(new Chart(this.chartTurbidezRef.nativeElement,
+        config('Turbidez NTU', lecturasOrdenadas.map(l => l.turbidez), '#d97706')));
 
     if (this.chartConductividadRef)
-      this.charts.push(new Chart(this.chartConductividadRef.nativeElement, config('Conductividad µS', lecturasOrdenadas.map(l => l.conductividad), '#7c3aed')));
+      this.charts.push(new Chart(this.chartConductividadRef.nativeElement,
+        config('Conductividad µS', lecturasOrdenadas.map(l => l.conductividad), '#7c3aed')));
   }
 
-  // GETTERS
+  // ── Getters ───────────────────────────────────────────
+
   get totalDispositivos(): number { return this.dispositivos.length; }
   get dispositivosActivos(): number { return this.dispositivos.filter(d => d.activo).length; }
   get totalLecturas(): number { return this.lecturas.length; }
   get alertasHoy(): number {
-    return this.lecturas.filter(l => l.estado === 'ADVERTENCIA' || l.estado === 'PRECAUCION').length;
+    return this.lecturas.filter(l =>
+      l.estado === 'ADVERTENCIA' || l.estado === 'PRECAUCION'
+    ).length;
   }
-  get ultimaLectura(): Lectura | null { return this.lecturas.length > 0 ? this.lecturas[0] : null; }
+  get ultimaLectura(): Lectura | null {
+    return this.lecturas.length > 0 ? this.lecturas[0] : null;
+  }
   get estadoGeneral(): string {
     if (this.lecturas.some(l => l.estado === 'ADVERTENCIA')) return 'ROJO';
-    if (this.lecturas.some(l => l.estado === 'PRECAUCION')) return 'AMARILLO';
+    if (this.lecturas.some(l => l.estado === 'PRECAUCION'))  return 'AMARILLO';
     return 'VERDE';
   }
 
@@ -177,14 +228,14 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   estadoClass(estado: string): string {
     if (estado === 'ADVERTENCIA') return 'badge-err';
-    if (estado === 'PRECAUCION') return 'badge-warn';
+    if (estado === 'PRECAUCION')  return 'badge-warn';
     return 'badge-ok';
   }
 
   tiempoTranscurrido(fecha: string): string {
     const diff = Math.floor((Date.now() - new Date(fecha).getTime()) / 1000);
-    if (diff < 60) return `hace ${diff}s`;
-    if (diff < 3600) return `hace ${Math.floor(diff / 60)}min`;
+    if (diff < 60)    return `hace ${diff}s`;
+    if (diff < 3600)  return `hace ${Math.floor(diff / 60)}min`;
     if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`;
     return `hace ${Math.floor(diff / 86400)}d`;
   }
