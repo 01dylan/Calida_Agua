@@ -44,6 +44,13 @@ export const routes: Routes = [
                 canActivate: [authGuard]
             },
             {
+                path: 'monitoreo',
+                loadComponent: () =>
+                    import('./features/monitoreo/monitoreo')
+                        .then(m => m.MonitoreoComponent),
+                canActivate: [authGuard]
+            },
+            {
                 path: 'roles',
                 loadComponent: () =>
                     import('./features/roles/roles')

@@ -16,8 +16,8 @@ Chart.register(...registerables);
   selector: 'app-monitoreo',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './monitoreo.component.html',
-  styleUrl: './monitoreo.component.css',
+  templateUrl: './monitoreo.html',
+  styleUrl: './monitoreo.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MonitoreoComponent implements OnInit, OnDestroy {
