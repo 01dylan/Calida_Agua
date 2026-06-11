@@ -240,9 +240,42 @@ def create_lectura(request):
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
     try:
-        data        = json.loads(request.body)
-        dispositivo = Dispositivo.objects.get(id=data["dispositivo_id"])
+        data = json.loads(request.body)
+        
+        # Intentamos obtener el dispositivo por dispositivo_id o por mac_address
+        dispositivo_id = data.get("dispositivo_id")
+        mac = data.get("mac")
+        
+        dispositivo = None
+        if dispositivo_id:
+            try:
+                dispositivo = Dispositivo.objects.get(id=dispositivo_id)
+            except Dispositivo.DoesNotExist:
+                return JsonResponse({"error": f"Dispositivo con ID {dispositivo_id} no existe"}, status=404)
+        elif mac:
+            dispositivo = Dispositivo.objects.filter(mac_address=mac).first()
+            if not dispositivo:
+                # Si no existe, creamos una comunidad por defecto y luego el dispositivo
+                comunidad = Comunidad.objects.first()
+                if not comunidad:
+                    comunidad = Comunidad.objects.create(
+                        nombre="Comunidad General",
+                        descripcion="Creada automáticamente para recibir datos de ESP32",
+                        ubicacion="Principal"
+                    )
+                
+                dispositivo = Dispositivo.objects.create(
+                    comunidad=comunidad,
+                    nombre=f"ESP32 ({mac})",
+                    mac_address=mac,
+                    activo=True
+                )
+                # Creamos el umbral de calidad por defecto
+                UmbralCalidad.objects.create(dispositivo=dispositivo)
+        else:
+            return JsonResponse({"error": "Debe proporcionar dispositivo_id o mac"}, status=400)
 
+        # Buscar o crear sensor principal para el dispositivo
         sensor = Sensor.objects.filter(dispositivo=dispositivo).first()
         if not sensor:
             sensor = Sensor.objects.create(
@@ -256,7 +289,8 @@ def create_lectura(request):
         try:
             th = dispositivo.umbral
         except UmbralCalidad.DoesNotExist:
-            th = UmbralCalidad(
+            th = UmbralCalidad.objects.create(
+                dispositivo=dispositivo,
                 temp_max_peligro=60,    temp_min_precaucion=10,
                 turbidez_peligro=600,   turbidez_precaucion=300,
                 conductividad_peligro=600, conductividad_precaucion=300,
@@ -264,10 +298,10 @@ def create_lectura(request):
                 ph_min_precaucion=6.0,  ph_max_precaucion=8.5,
             )
 
-        temp = float(data["temperatura"])
-        turb = int(data["turbidez"])
-        cond = int(data["conductividad"])
-        ph   = float(data["ph"])
+        temp = float(data.get("temperatura", 0.0))
+        turb = int(data.get("turbidez", 0))
+        cond = int(data.get("conductividad", data.get("tds", 0)))
+        ph   = float(data.get("ph", 7.0))
 
         es_peligro = (
             temp >= th.temp_max_peligro or turb > th.turbidez_peligro or
@@ -338,8 +372,6 @@ def create_lectura(request):
             "fuente": fuente,
         })
 
-    except Dispositivo.DoesNotExist:
-        return JsonResponse({"error": "Dispositivo no encontrado"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 @csrf_exempt

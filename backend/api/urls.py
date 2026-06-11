@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/lecturas/latest',                    views.get_latest_lectura, name='latest_lectura'),
     path('api/lecturas/create',                    views.create_lectura,     name='create_lectura'),
     path('api/lecturas/<int:pk>/delete',           views.delete_lectura,     name='delete_lectura'),
+    path('data',                                   views.create_lectura,     name='data'),
 
     # Alertas
     path('api/alertas',                            views.get_alertas,        name='get_alertas'),
