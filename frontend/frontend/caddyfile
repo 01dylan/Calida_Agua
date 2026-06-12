@@ -1,5 +1,5 @@
 :{$PORT} {
-    root * /app/dist/frontend/browser
+    root * /app/dist/frontend
     file_server
     try_files {path} /index.html
 }
