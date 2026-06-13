@@ -13,7 +13,7 @@ RUN npm run build
 FROM caddy:2-alpine
 
 COPY --from=build /app/dist/frontend /app/dist/frontend
-COPY ./Caddyfile /etc/caddy/Caddyfile
+COPY frontend/Caddyfile /etc/caddy/Caddyfile
 
 
 EXPOSE 80
