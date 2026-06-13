@@ -132,11 +132,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 CORS_ALLOWED_ORIGINS = [
-    'https://TU-FRONTEND.up.railway.app',  # ← URL del frontend Angular
-    'http://localhost:4200',               # ← para desarrollo local
+     'https://amusing-kindness-production-8e11.up.railway.app',
+    'http://localhost:4200',              # ← para desarrollo local
     'http://localhost:8000',
 ]
-
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
     'authorization',
