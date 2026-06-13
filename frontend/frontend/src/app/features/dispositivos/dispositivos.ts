@@ -208,15 +208,14 @@ export class Dispositivos implements OnInit {
       });
   }
 
-  formInicial(): Partial<Device> {
+ formInicial(): Partial<Device> {
     return {
       nombre: '',
       mac_address: '',
       ip_address: '',
       ubicacion: '',
       firmware: '',
-      activo: true,
-      comunidad_id: 1
+      activo: true
     };
   }
 
