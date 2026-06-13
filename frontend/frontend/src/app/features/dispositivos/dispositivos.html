@@ -196,6 +196,13 @@
 
       <div class="form-grid">
         <div class="form-group full">
+          <label>Comunidad *</label>
+          <select [(ngModel)]="dispositivoForm.comunidad_id">
+            <option [ngValue]="null" disabled>Seleccione comunidad</option>
+            <option *ngFor="let c of comunidades" [ngValue]="c.id">{{ c.nombre }} — {{ c.ubicacion }}</option>
+          </select>
+        </div>
+        <div class="form-group full">
           <label>Nombre *</label>
           <input type="text" [(ngModel)]="dispositivoForm.nombre" placeholder="ESP32-001">
         </div>

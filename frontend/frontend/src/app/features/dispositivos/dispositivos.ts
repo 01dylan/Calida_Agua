@@ -13,6 +13,8 @@ import { DeviceService } from '../../core/services/device.service';
 import { LecturaService } from '../../core/services/lectura.service';
 import { StorageService } from '../../core/services/storage.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ComunidadService } from '../../core/services/comunidad.service';
+import { Comunidades } from '../comunidades/comunidades';
 
 
 type TabActiva = 'dispositivos' | 'lecturas';
@@ -39,6 +41,7 @@ export class Dispositivos implements OnInit {
   deletingId: number | null = null;
   dispositivoForm: Partial<Device> = this.formInicial();
   searchTerm = '';
+ comunidades: any[] = [];
 
   //  Lecturas 
   lecturas: Lectura[] = [];
@@ -57,19 +60,25 @@ export class Dispositivos implements OnInit {
   successMessage = '';
   esAdmin = false;
 
-  constructor(
+
+
+ constructor(
     private deviceService: DeviceService,
     private lecturaService: LecturaService,
     private storageService: StorageService,
     private authService: AuthService,
+    private comunidadService: ComunidadService,
     private cdr: ChangeDetectorRef
-  ) {}
+) {}
 
-  ngOnInit(): void {
+ngOnInit(): void {
     this.esAdmin = this.authService.isAdmin();
+    this.comunidadService.listar().subscribe({
+      next: (data) => { this.comunidades = data ?? []; this.cdr.markForCheck(); }
+    });
     this.cargarDispositivos();
     this.cargarLecturas();
-  }
+}
 
  
   //   TABS
@@ -80,6 +89,14 @@ export class Dispositivos implements OnInit {
     this.cdr.markForCheck();
   }
 
+cargarComunidades(): void {
+    this.comunidadService.listar().subscribe({
+      next: (data) => {
+        this.comunidades = data ?? [];
+        this.cdr.markForCheck();
+      }
+    });
+}
   
   //   DISPOSITIVOS
   
@@ -208,16 +225,17 @@ export class Dispositivos implements OnInit {
       });
   }
 
- formInicial(): Partial<Device> {
+formInicial(): Partial<Device> {
     return {
       nombre: '',
       mac_address: '',
       ip_address: '',
       ubicacion: '',
       firmware: '',
-      activo: true
+      activo: true,
+      comunidad_id: this.comunidades.length > 0 ? this.comunidades[0].id : null
     };
-  }
+}
 
   
   //   LECTURAS
