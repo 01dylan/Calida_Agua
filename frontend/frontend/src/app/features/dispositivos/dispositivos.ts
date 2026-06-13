@@ -233,7 +233,7 @@ formInicial(): Partial<Device> {
       ubicacion: '',
       firmware: '',
       activo: true,
-      comunidad_id: this.comunidades.length > 0 ? this.comunidades[0].id : null
+      comunidad_id: this.comunidades?.length > 0 ? this.comunidades[0].id : null
     };
 }
 
