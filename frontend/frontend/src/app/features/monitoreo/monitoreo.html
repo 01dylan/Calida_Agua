@@ -20,6 +20,7 @@
 
   <!-- Sin dispositivos -->
   <div class="mon-empty" *ngIf="!loading && dispositivos.length === 0">
+    <div class="empty-icon">📡</div>
     <p>No hay dispositivos registrados.</p>
   </div>
 
@@ -28,48 +29,87 @@
 
     <!-- Cabecera dispositivo -->
     <div class="disp-header">
-      <div class="disp-info">
-        <span class="disp-dot" [class.dot-activo]="d.activo"></span>
-        <h3 class="disp-nombre">{{ d.nombre }}</h3>
-        <span class="disp-ubicacion">{{ d.ubicacion || 'Sin ubicación' }}</span>
+      <div class="disp-left">
+        <div class="disp-info">
+          <span class="disp-dot" [class.dot-activo]="d.activo"></span>
+          <h3 class="disp-nombre">{{ d.nombre }}</h3>
+          <span *ngIf="ultimaLectura[d.id]"
+                class="badge"
+                [ngClass]="estadoClass(ultimaLectura[d.id]!.estado)">
+            {{ ultimaLectura[d.id]!.estado }}
+          </span>
+        </div>
+        <!-- Info comunidad y zona -->
+        <div class="disp-meta">
+          <span class="meta-item">
+            <i class="meta-icon">📍</i>
+            {{ d.ubicacion || 'Sin ubicación' }}
+          </span>
+          <span class="meta-sep">·</span>
+          <span class="meta-item">
+           <i class="meta-icon">🏘️</i>
+           {{ getComunidad(d) }}
+            </span>
+          <span class="meta-sep">·</span>
+          <span class="meta-item">
+            <i class="meta-icon">📶</i>
+            {{ d.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+          <span class="meta-sep" *ngIf="d.mac_address">·</span>
+          <span class="meta-item" *ngIf="d.mac_address">
+            <i class="meta-icon">💻</i>
+            {{ d.mac_address }}
+          </span>
+        </div>
       </div>
-      <span *ngIf="ultimaLectura[d.id]"
-            class="badge"
-            [ngClass]="estadoClass(ultimaLectura[d.id]!.estado)">
-        {{ ultimaLectura[d.id]!.estado }}
-      </span>
     </div>
 
     <!-- Tarjetas últimos valores -->
     <div class="sensor-cards" *ngIf="ultimaLectura[d.id]; else sinDatos">
-      <div class="sensor-card">
-        <span class="sc-icon temp-icon">🌡️</span>
-        <span class="sc-label">Temperatura</span>
-        <span class="sc-value">{{ ultimaLectura[d.id]!.temperatura | number:'1.1-1' }} °C</span>
+      <div class="sensor-card temp">
+        <div class="sc-top">
+          <span class="sc-icon">🌡️</span>
+          <span class="sc-label">Temperatura</span>
+        </div>
+        <span class="sc-value">{{ ultimaLectura[d.id]!.temperatura | number:'1.1-1' }}</span>
+        <span class="sc-unit">°C</span>
         <span class="sc-time">{{ tiempoTranscurrido(ultimaLectura[d.id]!.fecha) }}</span>
       </div>
-      <div class="sensor-card">
-        <span class="sc-icon ph-icon">💧</span>
-        <span class="sc-label">pH</span>
+      <div class="sensor-card ph">
+        <div class="sc-top">
+          <span class="sc-icon">💧</span>
+          <span class="sc-label">pH</span>
+        </div>
         <span class="sc-value">{{ ultimaLectura[d.id]!.ph | number:'1.1-1' }}</span>
+        <span class="sc-unit">pH</span>
         <span class="sc-time">{{ tiempoTranscurrido(ultimaLectura[d.id]!.fecha) }}</span>
       </div>
-      <div class="sensor-card">
-        <span class="sc-icon turb-icon">🌊</span>
-        <span class="sc-label">Turbidez</span>
-        <span class="sc-value">{{ ultimaLectura[d.id]!.turbidez }} NTU</span>
+      <div class="sensor-card turb">
+        <div class="sc-top">
+          <span class="sc-icon">🌊</span>
+          <span class="sc-label">Turbidez</span>
+        </div>
+        <span class="sc-value">{{ ultimaLectura[d.id]!.turbidez }}</span>
+        <span class="sc-unit">NTU</span>
         <span class="sc-time">{{ tiempoTranscurrido(ultimaLectura[d.id]!.fecha) }}</span>
       </div>
-      <div class="sensor-card">
-        <span class="sc-icon cond-icon">⚡</span>
-        <span class="sc-label">Conductividad</span>
-        <span class="sc-value">{{ ultimaLectura[d.id]!.conductividad }} µS</span>
+      <div class="sensor-card cond">
+        <div class="sc-top">
+          <span class="sc-icon">⚡</span>
+          <span class="sc-label">Conductividad</span>
+        </div>
+        <span class="sc-value">{{ ultimaLectura[d.id]!.conductividad }}</span>
+        <span class="sc-unit">µS</span>
         <span class="sc-time">{{ tiempoTranscurrido(ultimaLectura[d.id]!.fecha) }}</span>
       </div>
     </div>
 
     <ng-template #sinDatos>
-      <div class="sin-datos">Sin lecturas registradas aún</div>
+      <div class="sin-datos">
+        <div class="sin-datos-icon">📊</div>
+        <p>Sin lecturas registradas aún</p>
+        <small>El ESP32 comenzará a enviar datos cuando esté conectado</small>
+      </div>
     </ng-template>
 
     <!-- Gráficas -->
@@ -79,6 +119,10 @@
           <span class="grafica-dot" [style.background]="sensor.color"></span>
           <span class="grafica-label">{{ sensor.label }}</span>
           <span class="grafica-unidad">{{ sensor.unidad }}</span>
+          <span class="grafica-ultimo" *ngIf="ultimaLectura[d.id]">
+            {{ ultimaLectura[d.id]![sensor.key] | number:'1.1-1' }}
+            {{ sensor.unidad }}
+          </span>
         </div>
         <div class="grafica-wrap">
           <canvas [id]="'chart-' + d.id + '-' + sensor.key"></canvas>

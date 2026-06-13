@@ -159,4 +159,10 @@ export class MonitoreoComponent implements OnInit, OnDestroy {
     if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`;
     return `hace ${Math.floor(diff / 86400)}d`;
   }
+  // Agrega este método para obtener comunidad del dispositivo
+getComunidad(dispositivo: Device): string {
+  return (dispositivo as any).comunidad_nombre || 
+         `Comunidad #${(dispositivo as any).comunidad_id}` || 
+         'Sin comunidad';
+}
 }
