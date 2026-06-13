@@ -114,19 +114,33 @@ def get_dispositivos(request):
         qs = qs.filter(comunidad_id=comunidad_id)
     return JsonResponse(list(qs.values()), safe=False)
 
+
 @csrf_exempt
 def create_dispositivo(request):
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
     try:
         data = json.loads(request.body)
-        obj  = Dispositivo.objects.create(
-            comunidad_id = data["comunidad_id"],
+        
+        # Si no envían comunidad_id, usar la primera comunidad
+        comunidad_id = data.get("comunidad_id")
+        if not comunidad_id:
+            comunidad = Comunidad.objects.first()
+            if not comunidad:
+                comunidad = Comunidad.objects.create(
+                    nombre="Comunidad General",
+                    descripcion="Creada automáticamente",
+                    ubicacion="Principal"
+                )
+            comunidad_id = comunidad.id
+        
+        obj = Dispositivo.objects.create(
+            comunidad_id = comunidad_id,
             nombre       = data["nombre"],
             mac_address  = data.get("mac_address", ""),
-            ip_address   = data.get("ip_address",  ""),
-            ubicacion    = data.get("ubicacion",   ""),
-            firmware     = data.get("firmware",    ""),
+            ip_address   = data.get("ip_address", ""),
+            ubicacion    = data.get("ubicacion", ""),
+            firmware     = data.get("firmware", ""),
         )
         UmbralCalidad.objects.create(dispositivo=obj)
         return JsonResponse({"ok": True, "id": obj.id})
