@@ -1,8 +1,8 @@
-FROM node:22-alpine AS build
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY ./package*.json ./
+COPY package*.json ./
 
 RUN npm install --legacy-peer-deps
 
@@ -10,12 +10,8 @@ COPY . .
 
 RUN npm run build
 
-FROM caddy:2-alpine
+RUN npm install -g serve
 
-COPY --from=build /app/dist/frontend /app/dist/frontend
-COPY frontend/Caddyfile /etc/caddy/Caddyfile
+EXPOSE 8080
 
-
-EXPOSE 80
-
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["serve", "-s", "dist/frontend", "-l", "8080"]
