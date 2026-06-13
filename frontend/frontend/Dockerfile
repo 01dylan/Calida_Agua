@@ -1,4 +1,4 @@
-FROM node:22 AS build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -10,8 +10,11 @@ COPY . .
 
 RUN npm run build
 
-RUN npm install -g serve
+FROM caddy:2-alpine
 
-EXPOSE 8080
+COPY --from=build /app/dist/frontend /app/dist/frontend
+COPY Caddyfile /etc/caddy/Caddyfile
 
-CMD ["serve", "-s", "dist/frontend", "-l", "8080"]
+EXPOSE 80
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
