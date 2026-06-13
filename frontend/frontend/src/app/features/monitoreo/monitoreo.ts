@@ -160,9 +160,14 @@ export class MonitoreoComponent implements OnInit, OnDestroy {
     return `hace ${Math.floor(diff / 86400)}d`;
   }
   // Agrega este método para obtener comunidad del dispositivo
+getValorSensor(lectura: Lectura, key: string): number {
+  return (lectura as any)[key] ?? 0;
+}
+
 getComunidad(dispositivo: Device): string {
-  return (dispositivo as any).comunidad_nombre || 
-         `Comunidad #${(dispositivo as any).comunidad_id}` || 
+  return (dispositivo as any).comunidad_nombre ||
+         `Comunidad #${(dispositivo as any).comunidad_id}` ||
          'Sin comunidad';
 }
+
 }

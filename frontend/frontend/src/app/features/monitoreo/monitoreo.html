@@ -120,8 +120,8 @@
           <span class="grafica-label">{{ sensor.label }}</span>
           <span class="grafica-unidad">{{ sensor.unidad }}</span>
           <span class="grafica-ultimo" *ngIf="ultimaLectura[d.id]">
-            {{ ultimaLectura[d.id]![sensor.key] | number:'1.1-1' }}
-            {{ sensor.unidad }}
+           {{ getValorSensor(ultimaLectura[d.id]!, sensor.key) | number:'1.1-1' }}
+          {{ sensor.unidad }}
           </span>
         </div>
         <div class="grafica-wrap">
