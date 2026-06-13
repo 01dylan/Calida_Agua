@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "sh -c 'serve -s dist/frontend/browser -l ${PORT:-8080}'",
+  "startCommand": "sh -c 'serve -s dist/frontend/browser -l ${PORT:-8080}'",
     "restartPolicyType": "ON_FAILURE"
   }
 }
