@@ -1,6 +1,5 @@
 // src/environments/environment.ts
-
 export const environment = {
-  production: false,
+  production: true,
   API_URL: 'https://calidaagua-production.up.railway.app/api'
 };

@@ -131,7 +131,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-CORS_ALLOW_ALL_ORIGINS = True   # solo para desarrollo
+CORS_ALLOWED_ORIGINS = [
+    'https://TU-FRONTEND.up.railway.app',  # ← URL del frontend Angular
+    'http://localhost:4200',               # ← para desarrollo local
+    'http://localhost:8000',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'origin',
+    'x-requested-with',
+]  # solo para desarrollo
 
 # Corregir TEMPLATES para que encuentre los HTML
 TEMPLATES[0]['DIRS'] = [BASE_DIR / 'api' / 'templates']
