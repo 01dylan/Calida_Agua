@@ -3,8 +3,10 @@
   "build": {
     "builder": "DOCKERFILE"
   },
+ 
   "deploy": {
-    "startCommand": "sh -c 'serve -s dist/frontend -l ${PORT:-8080}'",
+    "startCommand": "gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT",
     "restartPolicyType": "ON_FAILURE"
   }
+
 }
