@@ -3,9 +3,9 @@ from . import views
 
 urlpatterns = [
     # Páginas HTML
-    path('',           views.login_view, name='login'),     
-    path('dashboard/', views.dashboard,  name='dashboard'),
-    path('crud/',      views.crud,       name='crud'),
+    #path('',           views.login_view, name='login'),     
+    #path('dashboard/', views.dashboard,  name='dashboard'),
+    #path('crud/',      views.crud,       name='crud'),
 
     # Comunidades
     path('api/comunidades',                        views.get_comunidades,    name='get_comunidades'),

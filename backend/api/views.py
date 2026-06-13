@@ -20,14 +20,14 @@ import json
 # =====================================================
 #   PÁGINAS HTML
 # =====================================================
-def login_view(request):
-    return render(request, "login.html")
+#def login_view(request):
+    #return render(request, "login.html")
 
-def dashboard(request):
-    return render(request, "dashboard.html")
+#def dashboard(request):
+    #return render(request, "dashboard.html")
 
-def crud(request):
-    return render(request, "crud.html")
+#def crud(request):
+   # return render(request, "crud.html")
 
 
 # =====================================================
